@@ -67,6 +67,9 @@ class AjaxProductos{
 
       $respuesta = ControladorProductos::ctrMostrarProductos($item, $valor,
         $orden);
+      
+      $respuesta_meses = ControladorProductos::ctrGetPreciosMeses($valor);
+      $respuesta['precios_meses'] = $respuesta_meses;
 
       echo json_encode($respuesta);
 

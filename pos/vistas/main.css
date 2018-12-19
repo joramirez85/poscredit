@@ -1,0 +1,7 @@
+#tabla_meses .mes {
+    cursor: pointer;
+}
+
+.mes-elegido {
+    background-color: #FFECAD;
+}

@@ -256,8 +256,14 @@ if($_SESSION["perfil"] == "Especial"){
                         <option value="Efectivo">Efectivo - Contado</option>
                         <option value="TC">Tarjeta Crédito - Contado</option>
                         <option value="TD">Tarjeta Débito - Contado</option> 
-                        <option value="AD">A Crédito</option>                  
-                      </select>    
+                        <option value="a_credito">A Crédito</option>
+                      </select><br/><br/>
+                      <select class="form-control" id="frecuencia_pagos" name="frecuencia_pagos" required style="display:none">
+                        <option value="">Seleccione frecuencia de pagos</option>
+                        <option value="mensual">Mensual</option>
+                        <option value="quincenal">Quincenal</option>
+                        <option value="semanal">Semanal</option>
+                      </select>
 
                     </div>
 
@@ -268,6 +274,7 @@ if($_SESSION["perfil"] == "Especial"){
                   <input type="hidden" id="listaMetodoPago" name="listaMetodoPago">
 
                 </div>
+                <div class="row" style="padding:5px 15px" id="detalle_meses"></div>
 
                 <br>
       

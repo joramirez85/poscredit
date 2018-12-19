@@ -259,7 +259,7 @@ MODAL AGREGAR PRODUCTO
               <div class="input-group">
                 <label>
                   <input type="checkbox" class="minimal configmes">
-                    Configurar Meses a Credito?
+                    Configurar precios a crédito
                 </label>
               </div>
             </div>

@@ -76,6 +76,9 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
       	    var descripcion = respuesta["descripcion"];
           	var stock = respuesta["stock"];
           	var precio = respuesta["precio_venta"];
+			
+			var precios_meses = respuesta["precios_meses"];
+			var precios_meses_js = JSON.stringify(precios_meses);
 
           	/*=============================================
           	EVITAR AGREGAR PRODUTO CUANDO EL STOCK ESTÁ EN CERO
@@ -107,7 +110,7 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 	              
 	              '<span class="input-group-addon"><button type="button" class="btn btn-danger btn-xs quitarProducto" idProducto="'+idProducto+'"><i class="fa fa-times"></i></button></span>'+
 
-	              '<input type="text" class="form-control nuevaDescripcionProducto" idProducto="'+idProducto+'" name="agregarProducto" value="'+descripcion+'" readonly required>'+
+	              '<input type="text" class="form-control nuevaDescripcionProducto" idProducto="'+idProducto+'" name="agregarProducto" value="'+descripcion+'" data-precios_meses=\'' + precios_meses_js + '\' readonly required>'+
 
 	            '</div>'+
 
@@ -523,11 +526,62 @@ $("#nuevoTotalVenta").number(true, 2);
 SELECCIONAR MÉTODO DE PAGO
 =============================================*/
 
+function recalcular_inputs_meses() {
+	var total_meses = parseFloat($(".totales.mes-" + sessionStorage.cantidad_meses_elegidos).html());
+	var pago_inicial = parseFloat($("#pago_inicial").val());
+	if (!pago_inicial) {
+		$("#pago_inicial").val(0).number(true, 2);
+	}
+	
+	// (cantidad de pagos por mes)
+	var frecuencia_pagos_valores = {
+		"mensual": 1,
+		"quincenal": 2,
+		"semanal": 4
+	};
+	var frecuencia_pagos = $("#frecuencia_pagos").val();
+	var cantidad_pagos_mes = frecuencia_pagos_valores[frecuencia_pagos];
+	var cantidad_pagos = cantidad_pagos_mes * sessionStorage.cantidad_meses_elegidos;
+	$("#cantidad_pagos").html(cantidad_pagos);
+
+	var restante = total_meses - pago_inicial;
+	// var cantidad_cada_pago = restante / sessionStorage.cantidad_meses_elegidos;
+	var cantidad_cada_pago = restante / cantidad_pagos;
+	$("#cantidad_cada_pago").val(cantidad_cada_pago).number(true, 2);
+	$("#restante_meses").val(restante).number(true, 2);
+	console.log("CALCULADO");
+}
+
+$("#detalle_meses").on("click", ".mes-1, .mes-2, .mes-3, .mes-4, .mes-5", function() {
+	var element = $(this);
+	var las_clases = ["mes-1", "mes-2", "mes-3", "mes-4", "mes-5"];
+	var la_clase = "";
+	$.each(las_clases, function(index, clase) {
+		if (element.hasClass(clase)) {
+			la_clase = clase;
+			return false;
+		}
+	});
+	
+	sessionStorage.cantidad_meses_elegidos = la_clase.replace("mes-", "");
+	$(".mes-1, .mes-2, .mes-3, .mes-4, .mes-5").removeClass("mes-elegido");
+	$("." + la_clase).addClass("mes-elegido");
+
+	recalcular_inputs_meses();
+});
+
+$("#frecuencia_pagos").on("change", function() {
+	$("#nuevoMetodoPago").trigger("change");
+});
 $("#nuevoMetodoPago").change(function(){
 
 	var metodo = $(this).val();
+	if (metodo != "a_credito") {
+		$("#detalle_meses").html("").hide();
+		$("#frecuencia_pagos").hide();
+	}
 
-	if(metodo == "Efectivo" || metodo == "AD"){
+	if(metodo == "Efectivo") {
 
 		$(this).parent().parent().removeClass("col-xs-6");
 
@@ -556,7 +610,7 @@ $("#nuevoMetodoPago").change(function(){
 			<div class="col-xs-4">
 						<div class="input-group"> 
 							<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
-							<input type="text" class="form-control" id="nuevoValorEfectivo" placeholder="000000" required style="background-color: #EFFFEA; color: blue">
+							<input type="text" class="form-control" id="nuevoValorEfectivo" placeholder="Recibido" required style="background-color: #EFFFEA; color: blue">
 						</div>
 			 </div>
 			 
@@ -565,7 +619,7 @@ $("#nuevoMetodoPago").change(function(){
 			 	<div class="input-group">
 			 		<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
 
-			 		<input type="text" class="form-control" id="nuevoCambioEfectivo" placeholder="000000" readonly required style="background-color: #FF982D">
+			 		<input type="text" class="form-control" id="nuevoCambioEfectivo" placeholder="Cambio" readonly required style="background-color: #FF982D">
 
 			 	</div>
 
@@ -583,7 +637,115 @@ $("#nuevoMetodoPago").change(function(){
       	// Listar método en la entrada
       	listarMetodos()
 
-	}else{
+	}
+	else if (metodo == "a_credito") {
+		// A crédito
+		$("#frecuencia_pagos").show();
+		var frecuencia_pagos = $("#frecuencia_pagos").val();
+		if (!frecuencia_pagos) {
+			$("#detalle_meses").hide();
+			return;
+		}
+
+		var _tbody = "";
+		var totales = {
+			1: 0,
+			2: 0,
+			3: 0,
+			4: 0,
+			5: 0
+		};
+
+		$(".nuevaDescripcionProducto").each(function(index) {
+			var nombre_producto = $(this).val();
+			var precios_meses = $(this).data("precios_meses");
+			
+			totales["1"] += parseFloat(precios_meses["1"]);
+			totales["2"] += parseFloat(precios_meses["2"]);
+			totales["3"] += parseFloat(precios_meses["3"]);
+			totales["4"] += parseFloat(precios_meses["4"]);
+			totales["5"] += parseFloat(precios_meses["5"]);
+			
+			var tr_class = index / 2 == 0 ? "odd" : "even";
+
+			var mes1 = parseFloat(precios_meses["1"]).toFixed(2);
+			var mes2 = parseFloat(precios_meses["2"]).toFixed(2);
+			var mes3 = parseFloat(precios_meses["3"]).toFixed(2);
+			var mes4 = parseFloat(precios_meses["4"]).toFixed(2);
+			var mes5 = parseFloat(precios_meses["5"]).toFixed(2);
+
+			_tbody += `
+				<tr class="${tr_class}">
+					<td>${nombre_producto}</td>
+					<td class="mes mes-1">${mes1}</td>
+					<td class="mes mes-2">${mes2}</td>
+					<td class="mes mes-3">${mes3}</td>
+					<td class="mes mes-4">${mes4}</td>
+					<td class="mes mes-5">${mes5}</td>
+				</tr>`;
+			
+		});
+		var htmlCajasMetodoPago = `
+			<div>
+				<table id="tabla_meses" class="table table-bordered table-striped">
+					<thead>
+						<tr>
+							<th>Producto</th>
+							<th class="mes mes-1">1 Mes</th>
+							<th class="mes mes-2">2 Meses</th>
+							<th class="mes mes-3">3 Meses</th>
+							<th class="mes mes-4">4 Meses</th>
+							<th class="mes mes-5">5 Meses</th>
+						</tr>
+					</thead>
+					<tbody>
+						${_tbody}
+					</tbody>
+					<tfoot>
+						<tr style="font-weight:bold;">
+							<td>TOTAL</td>
+							<td class="totales mes mes-1">${totales["1"].toFixed(2)}</td>
+							<td class="totales mes mes-2">${totales["2"].toFixed(2)}</td>
+							<td class="totales mes mes-3">${totales["3"].toFixed(2)}</td>
+							<td class="totales mes mes-4">${totales["4"].toFixed(2)}</td>
+							<td class="totales mes mes-5">${totales["5"].toFixed(2)}</td>
+						</tr>
+					</tfoot>
+				</table>
+				<div class="col-xs-4 pull-right">
+					Cada pago (<span id="cantidad_pagos"></span> pagos):
+					<div class="input-group"> 
+						<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
+						<input type="text" class="form-control" id="cantidad_cada_pago" placeholder="0.00" readonly required style="background-color: #EBFAFF">
+					</div>
+				</div>
+				<div class="col-xs-4 pull-right">
+					Restante:
+					<div class="input-group"> 
+						<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
+						<input type="text" class="form-control" id="restante_meses" placeholder="0.00" readonly required style="background-color: #FFECAD">
+					</div>
+				</div>
+				<div class="col-xs-4 pull-right">
+					Pago inicial:
+					<div class="input-group"> 
+						<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
+						<input type="text" class="form-control" id="pago_inicial" placeholder="0.00" required style="background-color: #EFFFEA; color: blue">
+					</div>
+				</div>
+			</div>
+		`;
+		$("#detalle_meses").html(htmlCajasMetodoPago).show();
+		$("#pago_inicial").number(true, 2);
+		if (typeof sessionStorage.cantidad_meses_elegidos == "undefined") {
+			$("#detalle_meses .mes-1").trigger("click");
+		}
+		else {
+			$("#detalle_meses .mes-" + sessionStorage.cantidad_meses_elegidos).trigger("click");
+		}
+		$("#pago_inicial").on("change, keyup", recalcular_inputs_meses);
+	}
+	else {
 
 		$(this).parent().parent().removeClass('col-xs-4');
 
@@ -677,9 +839,9 @@ function listarMetodos(){
 
 		$("#listaMetodoPago").val("Efectivo");
 
-	} else if ($("#nuevoMetodoPago").val() == "AD") {
+	} else if ($("#nuevoMetodoPago").val() == "a_credito") {
 
-		$("#listaMetodoPago").val("AD");
+		$("#listaMetodoPago").val("a_credito");
 
 	}else{
 
