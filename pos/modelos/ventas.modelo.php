@@ -41,9 +41,10 @@ class ModeloVentas{
 	=============================================*/
 
 	static public function mdlIngresarVenta($tabla, $datos){
+		$pdo = Conexion::conectar();
+		$pdo->beginTransaction();
 
-		$stmt = Conexion::conectar()->prepare("INSERT INTO $tabla(codigo, id_cliente, id_vendedor, productos, impuesto, neto, total, metodo_pago) VALUES (:codigo, :id_cliente, :id_vendedor, :productos, :impuesto, :neto, :total, :metodo_pago)");
-
+		$stmt = $pdo->prepare("INSERT INTO $tabla(codigo, id_cliente, id_vendedor, productos, impuesto, neto, total, metodo_pago) VALUES (:codigo, :id_cliente, :id_vendedor, :productos, :impuesto, :neto, :total, :metodo_pago)");
 		$stmt->bindParam(":codigo", $datos["codigo"], PDO::PARAM_INT);
 		$stmt->bindParam(":id_cliente", $datos["id_cliente"], PDO::PARAM_INT);
 		$stmt->bindParam(":id_vendedor", $datos["id_vendedor"], PDO::PARAM_INT);
@@ -53,14 +54,86 @@ class ModeloVentas{
 		$stmt->bindParam(":total", $datos["total"], PDO::PARAM_STR);
 		$stmt->bindParam(":metodo_pago", $datos["metodo_pago"], PDO::PARAM_STR);
 
-		if($stmt->execute()){
+		// ES UNA VENTA A CREDITO
+		if (isset($datos['financiamiento'])) {
+			if ($stmt->execute()) {
+				$id_venta = $pdo->lastInsertId();
+				$financiamiento = $datos['financiamiento'];
+				$stmt2 = $pdo->prepare("INSERT INTO ventas_credito(id_venta, metodo_pago_inicial, codigo_transaccion, monto_pago_inicial, monto_financiado, monto_cada_pago, frecuencia_pagos, cantidad_pagos, fecha_primer_pago) VALUES (:id_venta, :metodo_pago_inicial, :codigo_transaccion, :monto_pago_inicial, :monto_financiado, :monto_cada_pago, :frecuencia_pagos, :cantidad_pagos, :fecha_primer_pago)");
+				
+				$stmt2->bindParam(":id_venta", $id_venta, PDO::PARAM_INT);
+				$stmt2->bindParam(":metodo_pago_inicial", $financiamiento["metodo_pago_inicial"], PDO::PARAM_STR);
+				$stmt2->bindParam(":codigo_transaccion", $financiamiento["codigo_transaccion"], PDO::PARAM_STR);
+				$stmt2->bindParam(":monto_pago_inicial", $financiamiento["monto_pago_inicial"], PDO::PARAM_STR);
+				$stmt2->bindParam(":monto_financiado", $financiamiento["monto_financiado"], PDO::PARAM_STR);
+				$stmt2->bindParam(":monto_cada_pago", $financiamiento["monto_cada_pago"], PDO::PARAM_STR);
+				$stmt2->bindParam(":frecuencia_pagos", $financiamiento["frecuencia_pagos"], PDO::PARAM_STR);
+				$stmt2->bindParam(":cantidad_pagos", $financiamiento["cantidad_pagos"], PDO::PARAM_INT);
+				$stmt2->bindParam(":fecha_primer_pago", $financiamiento["fecha_primer_pago"], PDO::PARAM_STR);
+				
+				if (!$stmt2->execute()) {
+					$pdo->rollback();
+					$error = $stmt2->errorInfo();
+					return "Error (1): ({$error[0]} - {$error[1]}) {$error[2]}";
+				}
+				else {
+					$id_venta_credito = $pdo->lastInsertId();
+					for ($i = 0; $i < $financiamiento["cantidad_pagos"]; $i++) {
+						$stmt_pagos = $pdo->prepare("INSERT INTO ventas_credito_pagos(
+							id_venta_credito,
+							monto,
+							fecha_cobro_original
+						) VALUES (
+							:id_venta_credito,
+							:monto,
+							:fecha_cobro_original
+						)");
 
-			return "ok";
+						if ($i == 0) {
+							$fecha_cobro_original = $financiamiento['fecha_primer_pago'];
+						}
+						else {
+							$dias = '';
+							if ($financiamiento['frecuencia_pagos'] == 'semanal') {
+								$dias = '+7 day';
+							}
+							if ($financiamiento['frecuencia_pagos'] == 'quincenal') {
+								$dias = '+14 day';
+							}
+							if ($financiamiento['frecuencia_pagos'] == 'mensual') {
+								$dias = '+28 day';
+							}
+							$fecha_cobro_original = strtotime($dias, strtotime($fecha_cobro_original));;
+							$fecha_cobro_original = date('Y-m-d', $fecha_cobro_original);
+						}
 
-		}else{
-
-			return "error";
-		
+						$stmt_pagos->bindParam(":id_venta_credito", $id_venta_credito, PDO::PARAM_INT);
+						$stmt_pagos->bindParam(":monto", $financiamiento['monto_cada_pago'], PDO::PARAM_STR);
+						$stmt_pagos->bindParam(":fecha_cobro_original", $fecha_cobro_original, PDO::PARAM_STR);
+						if (!$stmt_pagos->execute()) {
+							$pdo->rollback();
+							$error = $stmt_pagos->errorInfo();
+							return "Error (2): ({$error[0]} - {$error[1]}) {$error[2]}";
+						}
+					}
+					$pdo->commit();
+					return "ok";
+				}
+			}
+			else {
+				$pdo->rollback();
+				$error = $stmt->errorInfo();
+				return "Error (3): ({$error[0]} - {$error[1]}) {$error[2]}";
+			}
+		}
+		else if ($stmt->execute()) {
+				$pdo->commit();
+				return "ok";
+		}
+		else {
+			$pdo->rollback();
+			$error = $stmt->errorInfo();
+			return "Error (4): ({$error[0]} - {$error[1]}) {$error[2]}";
 		}
 
 		$stmt->close();

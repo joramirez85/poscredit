@@ -5,3 +5,7 @@
 .mes-elegido {
     background-color: #FFECAD;
 }
+
+.extra-meses-1 {
+    display: none;
+}
