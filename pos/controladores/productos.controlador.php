@@ -16,6 +16,15 @@ class ControladorProductos{
 
 	}
 
+	static public function ctrGetPreciosMeses($id_producto){
+		$precios_meses = ModeloProductos::mdlGetPreciosMeses($id_producto);
+		$respuesta = [];
+		foreach ($precios_meses as $i => $datos) {
+			$respuesta[$datos['cantidad_meses']] = $datos['precio'];
+		}
+		return $respuesta;
+	}
+
 	/*=============================================
 	CREAR PRODUCTO
 	=============================================*/
@@ -98,15 +107,24 @@ class ControladorProductos{
 
 				$tabla = "productos";
 
+				$precios_meses = array(
+					1 => isset($_POST['editarPrecioVentaMes1']) ? (float) $_POST['editarPrecioVentaMes1'] : 0,
+					2 => isset($_POST['editarPrecioVentaMes2']) ? (float) $_POST['editarPrecioVentaMes2'] : 0,
+					3 => isset($_POST['editarPrecioVentaMes3']) ? (float) $_POST['editarPrecioVentaMes3'] : 0,
+					4 => isset($_POST['editarPrecioVentaMes4']) ? (float) $_POST['editarPrecioVentaMes4'] : 0,
+					5 => isset($_POST['editarPrecioVentaMes5']) ? (float) $_POST['editarPrecioVentaMes5'] : 0,
+				);
+				
 				$datos = array("id_categoria" => $_POST["nuevaCategoria"],
 							   "codigo" => $_POST["nuevoCodigo"],
 							   "descripcion" => $_POST["nuevaDescripcion"],
 							   "stock" => $_POST["nuevoStock"],
 							   "precio_compra" => $_POST["nuevoPrecioCompra"],
 							   "precio_venta" => $_POST["nuevoPrecioVenta"],
-							   "imagen" => $ruta);
+							   "imagen" => $ruta,
+							);
 
-				$respuesta = ModeloProductos::mdlIngresarProducto($tabla, $datos);
+				$respuesta = ModeloProductos::mdlIngresarProducto($datos, $precios_meses);
 
 				if($respuesta == "ok"){
 

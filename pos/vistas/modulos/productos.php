@@ -228,7 +228,7 @@ MODAL AGREGAR PRODUCTO
                       <label>
                         
                         <input type="checkbox" class="minimal porcentaje" checked>
-                        Utilizar procentaje
+                        Utilizar porcentaje
                       </label>
 
                     </div>
@@ -259,7 +259,7 @@ MODAL AGREGAR PRODUCTO
               <div class="input-group">
                 <label>
                   <input type="checkbox" class="minimal configmes">
-                    Configurar Meses a Credito?
+                    Configurar precios a crédito
                 </label>
               </div>
             </div>
@@ -532,7 +532,7 @@ MODAL EDITAR PRODUCTO
                       <label>
                         
                         <input type="checkbox" class="minimal porcentaje" checked>
-                        Utilizar procentaje
+                        Utilizar porcentaje
                       </label>
 
                     </div>

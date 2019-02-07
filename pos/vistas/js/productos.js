@@ -7,14 +7,14 @@ $.ajax({
 	url: "ajax/datatable-productos.ajax.php",
 	success:function(respuesta){
 		
-		console.log("respuesta", respuesta);
+		// console.log("respuesta", respuesta);
 
 	}
 
 })
 
 var perfilOculto = $("#perfilOculto").val();
-console.log("perfilOculto", perfilOculto);
+// console.log("perfilOculto", perfilOculto);
 
 $('.tablaProductos').DataTable( {
     "ajax": "ajax/datatable-productos.ajax.php?perfilOculto="+perfilOculto,
@@ -136,8 +136,7 @@ $(".configmes").on("ifChecked",function() {
   $("#editarPrecioVentaMes3").val(precioVentaMes3);
   $("#editarPrecioVentaMes4").val(precioVentaMes4);
   $("#editarPrecioVentaMes5").val(precioVentaMes5);
-})
-
+});
 
 /*=============================================
 CAMBIO DE PORCENTAJE

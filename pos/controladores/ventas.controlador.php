@@ -115,6 +115,22 @@ class ControladorVentas{
 						   "neto"=>$_POST["nuevoPrecioNeto"],
 						   "total"=>$_POST["totalVenta"],
 						   "metodo_pago"=>$_POST["listaMetodoPago"]);
+			
+			if ($_POST["listaMetodoPago"] == 'a_credito') {
+				$fecha_primer_pago = $_POST['fecha_primer_pago'];
+				$fecha_primer_pago = explode('/', $fecha_primer_pago);
+				$fecha_primer_pago = "{$fecha_primer_pago[2]}-{$fecha_primer_pago[1]}-{$fecha_primer_pago[0]}";
+				$datos['financiamiento'] = array(
+					'metodo_pago_inicial' => $_POST['metodo_pago_inicial'],
+					'codigo_transaccion' => $_POST['codigo_transaccion'],
+					'monto_pago_inicial' => str_replace(',', '', $_POST['monto_pago_inicial']),
+					'monto_financiado' => str_replace(',', '', $_POST['monto_financiado']),
+					'monto_cada_pago' => str_replace(',', '', $_POST['monto_cada_pago']),
+					'frecuencia_pagos' => $_POST['frecuencia_pagos'],
+					'cantidad_pagos' => $_POST['cantidad_pagos'],
+					'fecha_primer_pago' => $fecha_primer_pago,
+				);
+			}
 
 			$respuesta = ModeloVentas::mdlIngresarVenta($tabla, $datos);
 
@@ -139,6 +155,24 @@ class ControladorVentas{
 
 				</script>';
 
+			}
+			else {
+				echo'<script>
+
+				swal({
+					  type: "error",
+					  title: "Error al crear la venta:<br/><br/>' . $respuesta . '",
+					  showConfirmButton: true,
+					  confirmButtonText: "Cerrar"
+					  }).then(function(result){
+								if (result.value) {
+
+								window.location = "ventas";
+
+								}
+							});
+
+				</script>';
 			}
 
 		}

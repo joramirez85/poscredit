@@ -246,29 +246,31 @@ if($_SESSION["perfil"] == "Especial"){
                 ======================================-->
 
                 <div class="form-group row">
-                  
-                  <div class="col-xs-6" style="padding-right:0px">
-                    
-                     <div class="input-group">
-                  
+                  <div class="col-xs-6">
+                    <div class="input-group pull-left">
                       <select class="form-control" id="nuevoMetodoPago" name="nuevoMetodoPago" required>
                         <option value="">Seleccione método de pago</option>
                         <option value="Efectivo">Efectivo - Contado</option>
                         <option value="TC">Tarjeta Crédito - Contado</option>
                         <option value="TD">Tarjeta Débito - Contado</option> 
-                        <option value="AD">A Crédito</option>                  
-                      </select>    
-
+                        <option value="a_credito">Crédito</option>
+                      </select><br/><br/>
                     </div>
-
                   </div>
-
-                  <div class="cajasMetodoPago"></div>
-
-                  <input type="hidden" id="listaMetodoPago" name="listaMetodoPago">
-
+                  <div class="col-xs-6">
+                    <div class="input-group pull-left">
+                      <select class="form-control" id="frecuencia_pagos" name="frecuencia_pagos" style="display:none">
+                        <option value="">Seleccione frecuencia de pagos</option>
+                        <option value="mensual">Mensual</option>
+                        <option value="quincenal">Quincenal</option>
+                        <option value="semanal">Semanal</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-
+                <div class="cajasMetodoPago form-group row"></div>
+                <input type="hidden" id="listaMetodoPago" name="listaMetodoPago">
+                <div class="form-group row" style="padding:5px 15px" id="detalle_meses"></div>
                 <br>
       
               </div>
